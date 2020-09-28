@@ -1,18 +1,19 @@
 import puppeteer from 'puppeteer'
-import randomUseragent from 'random-useragent'
 import * as fs from 'fs'
 
-import {DB} from './DB.js'
+import DB from './DB.js'
 let db = new DB();
 
-const PUPPETEER_UI_FLAG = false
+import RandomScraper from './RandomScraper.js'
+let randomScraper = new RandomScraper()
+
+const PUPPETEER_UI_FLAG = true
 
 const propertyDropdown = '[aria-labelledby="inputPropertyTypeLabel inputPropertyTypes"]'
 const propertyListSelector = '.card__title.card--result__title > a'
 const multiSelectInput = '.multiselect__input'
 
 const main = async () => {
-
     //setting up the browser
     const browser = await puppeteer.launch({
         headless: PUPPETEER_UI_FLAG,
@@ -33,23 +34,29 @@ const main = async () => {
 
     await db.start()
 
-    for(let properyTypeIterator = 2; properyTypeIterator <= 11; properyTypeIterator++) {
+    const properyTypesList = await randomScraper.generateRandomUniqueArray(1,11)
 
+    for(let properyTypeIterator = 0; properyTypeIterator <= properyTypesList.length; properyTypeIterator++) {
+        console.log(`Selected- ${properyTypesList[properyTypeIterator]} for property`)
         //set the type of house
         await page.goto('https://www.immoweb.be/en/search/house/for-sale?countries=BE', {waitUntil: "networkidle2"})
         await page.waitForSelector(propertyDropdown)
         await page.evaluate((val)=> {
             document.getElementById('inputPropertyTypes').click()
             document.querySelector(`#inputPropertyTypes-item-${val}`).click()
-        },properyTypeIterator)
+        },properyTypesList[properyTypeIterator])
 
         await page.waitForTimeout(5000)
 
+        const randomZipcodesIndexes = await randomScraper.generateRandomUniqueArray(0,zipcodes.length)
+
         for(let zipCodesIterator = 0; zipCodesIterator < zipcodes.length; zipCodesIterator++) {
-            if(zipcodes[zipCodesIterator] < 2627) continue;
+            let selectedIndex = randomZipcodesIndexes[zipCodesIterator]
+
+            console.log(`Selected- ${zipcodes[selectedIndex]} for zipcode`)
             //await page.waitForSelector(propertyListSelector)
             let zipCodeInput = await page.$(multiSelectInput)
-            await zipCodeInput.type(zipcodes[zipCodesIterator])
+            await zipCodeInput.type(zipcodes[selectedIndex])
 
             await page.waitForTimeout(5000)
             
@@ -67,7 +74,6 @@ const main = async () => {
             await page.waitForTimeout(5000)
 
             let flagPagination = await page.$('.pagination__item')
-
             if(flagPagination) {
                 let properyCount = await page.evaluate(()=>{
                     let count = document.querySelectorAll('.pagination__item').length
@@ -82,39 +88,37 @@ const main = async () => {
             }
             
             await page.click('.tag--close')
-            await console.log(`Done searching for ${zipcodes[zipCodesIterator]}`)
+
+            await console.log(`Done searching for ${zipcodes[selectedIndex]}`)
         }
     }
-    
     await db.end()
-
 }
 
 const propertyLinksURL = async (properyCount, page) => {
+    let trueCount = 0
+    let falseCount = 0
     for(let i = 1; i <= parseInt(properyCount); i ++) {
         console.log('Navigating page- ', i)
+        let url = `${page.url()}&page=${i}`
+        await page.goto(url, {waitUntil: "networkidle2"})
 
-        try {
-            let url = `${page.url()}&page=${i}`
-            await page.goto(url, {waitUntil: "networkidle2"})
+        await page.waitForTimeout(2000)
 
-            await page.waitForSelector(propertyListSelector)
-    
+        let ifPropertiesExist = await page.$(propertyListSelector)
+
+        if(ifPropertiesExist) {
             let values = await page.$$eval(propertyListSelector, options => options.map(val => val.href))
-    
-            await values.map(val=>{
+
+            values.map(async val=>{
                 let splitVal = val.split('?searchId')
-                db.ins(splitVal[0].trim())
+                let flag = await db.ins(splitVal[0].trim())
+                flag? trueCount++ : falseCount++
             })
-
-        } catch(e) {
-            console.log(e)
+            await console.log(`\n Inserted ${trueCount}, Repeated ${falseCount} \n`)
+        } else {
+            console.log('_skip_')
         }
-
-        // //await csvWriter.writeRecords(records)
-        // let cookies = await page.cookies()
-        // await page.deleteCookie(...cookies)
-
     }
 }
 

@@ -1,7 +1,7 @@
 import MongoClient from 'mongodb'
 
-export class DB {
-    constructor(url = 'mongodb://localhost:27017/', dbName = 'Palafito', collection = 'immowebLinks') {
+export default class DB {
+    constructor(url = 'mongodb://localhost:27017/', dbName = 'Palafito', collection = 'immoweb') {
         this.url = url
         this.dbName = dbName
         this.collection = collection
@@ -19,16 +19,16 @@ export class DB {
     }
 
     ins = async (newLink) => {
-        let data = await this.db.collection(this.collection).findOne({links: newLink})
+        let data = await this.db.collection(this.collection).findOne({source: newLink})
 
         if(data == null) {
-            await this.db.collection(this.collection).insertOne({links: newLink})
-            console.log('inserted')
-        } else console.log('Link repeated')
+            await this.db.collection(this.collection).insertOne({source: newLink, status: 0})
+            return true
+        } else return false
     }
 
     insUpdated = async(data) => {
-        await this.db.collection('immoweb').insertMany(data)
+        await this.db.collection(this.collection).insertMany(data)
     }
 
     end = async () => {
@@ -39,8 +39,9 @@ export class DB {
         }
     }
 
-    findAll = async () => {
-        let data = await this.db.collection(this.collection).find({}).toArray()
-        return data
+    lastIndex = async ()=> {
+        let result = await this.db.collection(this.collection).find({},{_id:0,index:1}).sort({index:-1}).limit(1).toArray()
+        return result[0].index
     }
+
 }
