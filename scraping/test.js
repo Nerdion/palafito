@@ -6,7 +6,7 @@ const main = async () => {
     let trueCount=0
     let flag = true
 
-    (flag)? trueCount++ : falseCount++
+    flag? trueCount++ : falseCount++
     console.log(trueCount)
 }
 main().then(console.log(''))
