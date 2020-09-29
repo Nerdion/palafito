@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer'
-const PUPPETEER_UI_FLAG = false
+const PUPPETEER_UI_FLAG = true
 
 import {PostDetails} from './Immoweb.js'
 
@@ -12,10 +12,8 @@ const main = async () => {
 
     await page.setViewport({ width: 1366, height: 768})
     
-    const postDetails = new PostDetails(page)
-    await postDetails.getLoggedIn()
-
-
+    const postDetails = await new PostDetails(page)
+    await postDetails.getDetails()
 
     // await page.setViewport({ width: 1366, height: 768})
 }

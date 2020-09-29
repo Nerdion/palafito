@@ -27,10 +27,6 @@ export default class DB {
         } else return false
     }
 
-    insUpdated = async(data) => {
-        await this.db.collection(this.collection).insertMany(data)
-    }
-
     end = async () => {
         try {
             await this.connection.close()
@@ -44,4 +40,12 @@ export default class DB {
         return result[0].index
     }
 
+    selectRandomSample = async () => {
+        let randomValue = await this.db.collection(this.collection).aggregate([{$match:{status:0}},{$sample:{size:1}}]).toArray()
+        let sourceUrl = randomValue[0].source
+        await this.db.collection(this.collection).updateOne({source:sourceUrl}, {$set:{status:1}})
+        console.log(`Took ${sourceUrl} to find data`)
+        return randomValue
+    }
+    
 }
