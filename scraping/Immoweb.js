@@ -101,8 +101,12 @@ class PostDetails {
         //exterior surface
         //if(textualData.match(regexPatterns.outdoorSurface)) propertyDetails.outdoorSurface = await textualData.match(regexPatterns.outdoorSurface)[0]
 
+        let m
+        if(m = await textualData.match(/(?<=Surface of the plot\\t)\d+/gm)) {
+            propertyDetails.outdoorSurface = m[0]
+        }
 
-        propertyDetails.outdoorSurface = await textualData.match(/(?<=Surface of the plot\\t)\d+/gm)[0]
+
 
         console.log(await propertyDetails)
     }
