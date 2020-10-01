@@ -43,7 +43,7 @@ class PostDetails {
 
         await db.start()
 
-        let sourceUrl = 'https://www.immoweb.be/en/classified/building-land/for-sale/mouscron/7700/8566383'
+        let sourceUrl = 'https://www.immoweb.be/en/classified/house/for-sale/woluwe-saint-pierre/1150/8856902?searchId=5f758f8b89133and/for-sale/mouscron/7700/8566383'
         await this.getLoggedIn()
         await this.page.goto(sourceUrl,{waitUntil: "networkidle2"})
 
@@ -75,8 +75,7 @@ class PostDetails {
 
         let regexPatterns = {
             category : new RegExp('(?<=classified\/).*(?=\/for-sale)',''),
-            outdoorSurface : new RegExp('(?<=Surface of the plot).*\d+', 'gm'),
-
+            outdoorSurface : ''
         }
 
 
@@ -95,16 +94,15 @@ class PostDetails {
             let data = document.querySelectorAll('.classified-table__row')
 
             for(let i=0; i<data.length; i++) {
-                dataInText += data[i].innerText + '\n'
+                dataInText += JSON.stringify(data[i].innerText) + '\n'
             }
             return dataInText
         })
-
-        console.log(await textualData)
         //exterior surface
         //if(textualData.match(regexPatterns.outdoorSurface)) propertyDetails.outdoorSurface = await textualData.match(regexPatterns.outdoorSurface)[0]
 
-        console.log(regexPatterns.outdoorSurface,'outdoor=',await textualData.match(/Surface/))
+
+        propertyDetails.outdoorSurface = await textualData.match(/(?<=Surface of the plot\\t)\d+/gm)[0]
 
         console.log(await propertyDetails)
     }
