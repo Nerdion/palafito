@@ -44,8 +44,14 @@ export default class DB {
         let randomValue = await this.db.collection(this.collection).aggregate([{$match:{status:0}},{$sample:{size:1}}]).toArray()
         let sourceUrl = randomValue[0].source
         await this.db.collection(this.collection).updateOne({source:sourceUrl}, {$set:{status:1}})
-        console.log(`Took ${sourceUrl} to find data`)
-        return randomValue
+        return sourceUrl
     }
-    
+
+    insertPropertyDetails = async (sourceLink, propertyDetails) => {
+        try {
+            await this.db.collection(this.collection).findOneAndUpdate({source:sourceLink, status:1}, {$set:propertyDetails})
+        } catch(e) {
+            console.log('Unable to insert',e)
+        }
+    }
 }

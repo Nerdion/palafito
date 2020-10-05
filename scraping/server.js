@@ -14,8 +14,6 @@ const main = async () => {
     
     const postDetails = await new PostDetails(page)
     await postDetails.getDetails()
-
-    // await page.setViewport({ width: 1366, height: 768})
 }
 
 
